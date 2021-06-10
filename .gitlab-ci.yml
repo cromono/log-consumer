@@ -1,0 +1,50 @@
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build
+  - package
+  - deploy
+
+variables:
+  IMAGE_NAME: lukekijung/logconsumer
+
+build:
+  image: gradle:7.0.2-jdk11
+  stage: build
+  script:
+    - gradle clean build
+  artifacts:
+    paths:
+      - build/libs/*.jar
+  tags:
+    - log-consumer
+
+package:
+  stage: package
+  script:
+    - docker build -t $IMAGE_NAME .
+    - docker login -u $DOCKERHUB_ID -p $DOCKERHUB_PASS
+    - docker push $IMAGE_NAME
+    - docker images | grep 'logconsumer'
+  tags:
+    - log-consumer
+
+deploy_staging:
+  stage: deploy
+  script:
+    - apk upgrade && apk update
+    - apk add openssh-client
+    - apk add sshpass
+    - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker login -u $DOCKERHUB_ID -p $DOCKERHUB_PASS
+    - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker pull $IMAGE_NAME
+    - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP "docker container stop logconsumer && docker container rm logconsumer || true"
+    - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker run --name logconsumer -p 81:8080 -d $IMAGE_NAME
+  environment:
+    name: staging
+    url: $STAGING_SERVER_IP:81
+  only:
+    - develop
+  tags:
+    - log-consumer
