@@ -1,0 +1,30 @@
+spring:
+#  kafka:
+#    consumer:
+#      bootstrap-servers: 211.115.73.153:9092
+#      group-id: foo
+#      auto-offset-reset: earliest
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#    producer:
+#      bootstrap-servers: 211.115.73.153:9092
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  kafka:
+    consumer:
+      group-id: my-test
+      enable-auto-commit: true
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 1000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    template:
+      default-topic: quickstart-events
+    bootstrap-servers: 211.115.73.153:9092
+    zipkin:
+      sender:
+        type: kafka
