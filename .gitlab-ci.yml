@@ -19,7 +19,7 @@ build:
     paths:
       - build/libs/*.jar
   tags:
-    - cronmonitor
+    - log-consumer
 
 package:
   stage: package
@@ -29,7 +29,7 @@ package:
     - docker push $IMAGE_NAME
     - docker images | grep 'logconsumer'
   tags:
-    - logconsumer
+    - log-consumer
 
 deploy_staging:
   stage: deploy
@@ -47,4 +47,4 @@ deploy_staging:
   only:
     - develop
   tags:
-    - cronmonitor
+    - log-consumer
