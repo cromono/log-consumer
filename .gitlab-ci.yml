@@ -46,5 +46,6 @@ deploy_staging:
     url: $STAGING_SERVER_IP:81
   only:
     - develop
+    - master
   tags:
     - log-consumer
