@@ -3,12 +3,40 @@ services:
   - docker:dind
 
 stages:
+  - test
+  - visualize
   - build
   - package
   - deploy
 
 variables:
   IMAGE_NAME: lukekijung/logconsumer
+
+test-jdk11:
+  stage: test
+  image: gradle:7.0.2-jdk11
+  script:
+    - 'gradle test jacocoTestReport' # jacoco must be configured to create an xml report
+  artifacts:
+    paths:
+      - build/jacoco/jacoco.xml
+  tags:
+    - log-consumer
+
+coverage-jdk11:
+  stage: visualize
+  image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.7
+  script:
+    # convert report from jacoco to cobertura, using relative project path
+    - python /opt/cover2cover.py build/jacoco/jacoco.xml $CI_PROJECT_DIR/src/main/java/ > build/cobertura.xml
+  needs: ["test-jdk11"]
+  dependencies:
+    - test-jdk11
+  artifacts:
+    reports:
+      cobertura: build/cobertura.xml
+  tags:
+    - log-consumer
 
 build:
   image: gradle:7.0.2-jdk11
