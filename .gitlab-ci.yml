@@ -48,6 +48,9 @@ build:
   artifacts:
     paths:
       - build/libs/*.jar
+  only:
+    - develop
+    - master
   tags:
     - log-consumer
 
@@ -73,7 +76,7 @@ deploy_staging:
     - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker login -u $DOCKERHUB_ID -p $DOCKERHUB_PASS
     - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker pull $IMAGE_NAME
     - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP "docker container stop logconsumer && docker container rm logconsumer || true"
-    - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker run --name logconsumer -p 81:8080 -d $IMAGE_NAME
+    - sshpass -p "$STAGING_SERVER_PASS" ssh -o StrictHostKeyChecking=no $STAGING_SERVER_USER@$STAGING_SERVER_IP docker run --name logconsumer -p 81:8081 -d $IMAGE_NAME
   environment:
     name: staging
     url: $STAGING_SERVER_IP:81

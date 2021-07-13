@@ -16,17 +16,23 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.projectlombok:lombok:1.18.18'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-devtools'
 	implementation group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.7.2'
     implementation 'junit:junit:4.13.1'
     compileOnly 'org.projectlombok:lombok'
 //	runtimeOnly 'io.micrometer:micrometer-registry-influx'
+	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'mysql:mysql-connector-java'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	implementation group: 'com.github.ulisesbocchio', name: 'jasypt-spring-boot-starter', version: '3.0.2'
 	api 'com.influxdb:influxdb-client-java:2.3.0'
 
 	//JUnit4 추가
@@ -63,7 +69,8 @@ jacocoTestReport {
 					exclude: ['**/dto/',
 							  '**/entity/',
 							  '**/exception/',
-							  '**/util/'
+							  '**/util/',
+							  '**/service/WebhookService'
 					] )
 		}))
 	}
@@ -88,7 +95,8 @@ jacocoTestCoverageVerification {
 					'*.*Handler',
 					'*.LogConsumerApplication',
 					'*.entity.*',
-					'*.util.*'
+					'*.util.*',
+					'*.service.WebhookService'
 			]
 		}
 	}
