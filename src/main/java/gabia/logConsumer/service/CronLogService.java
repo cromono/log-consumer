@@ -1,11 +1,10 @@
 package gabia.logConsumer.service;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import gabia.logConsumer.entity.CronLog;
+import gabia.logConsumer.business.CronLogBusiness;
+import gabia.logConsumer.business.NoticeBusiness;
+import gabia.logConsumer.dto.ParsedLogDTO;
 import gabia.logConsumer.repository.CronLogRepository;
 import java.io.IOException;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -18,9 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CronLogService {
 
-
-    private final CronLogRepository cronLogRepository;
-
+    private final CronLogBusiness cronLogBusiness;
     /**
      * 카프카 메시지를 컨슘하여 InfluxDB에 로그를 저장
      *
@@ -29,24 +26,13 @@ public class CronLogService {
      * @throws IOException
      */
     @KafkaListener(topics = "syslog", groupId = "my-test")
-    public CronLog addCronLog(String message) throws IOException {
+    public ParsedLogDTO addCronLog(String message) throws IOException {
 
-        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
-        Instant logTime = Instant.parse(jsonObject.get("@timestamp").getAsString());
-        String log = jsonObject.get("message").getAsString();
-        String[] arr = log.split("[\\[,\\],\\s,(,),:]");
+        ParsedLogDTO parsedLogDTO = new ParsedLogDTO().fromMessage(message);
 
-        CronLog cronLog = CronLog.builder()
-            .logTime(logTime)
-            .log(log)
-            .cronProcess(arr[7])
-            .build();
-        // 로그 확인
-        System.out.println(cronLog);
-        System.out.println(String.format("CRON SYSLOG LOG : %s", log));
-        System.out.println(String.format("CRON SYSLOG TIME : %s", logTime));
+        ParsedLogDTO result = cronLogBusiness.saveLog(parsedLogDTO);
 
-        return cronLogRepository.save(cronLog);
+        return result;
     }
 
 

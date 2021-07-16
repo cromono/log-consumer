@@ -6,9 +6,14 @@ import gabia.logConsumer.dto.ParsedLogDTO;
 import gabia.logConsumer.entity.CronLog;
 import gabia.logConsumer.repository.CronLogRepository;
 import gabia.logConsumer.repository.NoticeSubscriptionRepository;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.common.protocol.types.Field.Str;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -18,10 +23,9 @@ import org.springframework.web.client.RestTemplate;
 public class NoticeBusiness {
 
     private final RestTemplate restTemplate;
-    private final CronLogRepository cronLogRepository;
 
-    //    private final String url = "http://10.7.27.11:80/notifications/notice";
-    private final String url = "http://localhost:8081/notifications/notice";
+        private final String url = "http://10.7.27.11:80/notifications/notice";
+//    private final String url = "http://localhost:8081/notifications/notice";
 
     /**
      * Notice 생성
@@ -31,45 +35,30 @@ public class NoticeBusiness {
      */
     public String postNotice(ParsedLogDTO parsedLogDTO) {
 
-        // Post 할 Request 생성
-        NoticeDTO.Request request = new Request();
-        request.setNoticeMessage(parsedLogDTO.getContent());
-        request.setNoticeType(parsedLogDTO.getNoticeType());
-        request.setCronJobId(parsedLogDTO.getCronJobId());
-        request.setNoticeCreateDateTime(parsedLogDTO.getTimestamp());
+        // request 생성
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("noticeMessage", parsedLogDTO.getContent());
+        request.put("noticeType", parsedLogDTO.getNoticeType().toString());
+        request.put("cronJobId", parsedLogDTO.getCronJobId().toString());
+        request.put("noticeCreateDateTime", parsedLogDTO.getTimestamp().toString());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(
+            request);
 
         // 생성한 Request Cron Monitoring 서버로 Post
         HttpHeaders headers = new HttpHeaders();
         try {
-            String response = restTemplate
-                .postForObject(url, new HttpEntity<>(request, headers), String.class);
-            return response;
+            ResponseEntity<String> response = restTemplate
+                .exchange(url, HttpMethod.POST, entity, String.class);
+            String result = String.valueOf(response.getStatusCodeValue());
+            return result;
         } catch (HttpClientErrorException e) {
-            String errorStatus = Integer.toString(e.getRawStatusCode());
-            return errorStatus;
+            String result = e.getStatusCode().toString();
+            return result;
         }
     }
 
-    /**
-     * Influx DB에 Log 저장
-     *
-     * @param parsedLogDTO
-     * @return CronLog
-     */
-    public ParsedLogDTO saveLog(ParsedLogDTO parsedLogDTO) {
 
-        //Log Entity 생성
-        CronLog cronLog = CronLog.builder()
-            .cronProcess(parsedLogDTO.getPid())
-            .log(parsedLogDTO.getContent())
-            .logTime(parsedLogDTO.getTimestamp().toInstant())
-            .build();
-
-        //Influx DB에 Log 저장
-        cronLogRepository.save(cronLog);
-
-        return parsedLogDTO;
-    }
 
 
 }
