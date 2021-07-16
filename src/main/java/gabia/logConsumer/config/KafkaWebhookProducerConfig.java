@@ -15,8 +15,8 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @Configuration
 public class KafkaWebhookProducerConfig {
 
-    //    private String bootstrapServer = "http://182.162.142.151:9093";
-    private String bootstrapServer = "http://127.0.0.1:9092";
+    private String bootstrapServer = "http://10.7.27.9:9092";
+//    private String bootstrapServer = "http://127.0.0.1:9092";
 
     @Bean
     public ProducerFactory<String, WebhookDTO.Request> producerFactory() {
