@@ -1,9 +1,13 @@
 package gabia.logConsumer.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import gabia.logConsumer.business.CronLogBusiness;
+import gabia.logConsumer.business.CronProcessBusiness;
 import gabia.logConsumer.business.NoticeBusiness;
 import gabia.logConsumer.business.WebhookBusiness;
+import gabia.logConsumer.dto.HiworksDTO;
 import gabia.logConsumer.dto.ParsedLogDTO;
+import gabia.logConsumer.dto.SlackDTO;
+import gabia.logConsumer.dto.SlackDTO.Attachment;
 import gabia.logConsumer.dto.WebhookDTO;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +20,8 @@ public class WebhookService {
 
     private final NoticeBusiness noticeBusiness;
     private final WebhookBusiness webhookBusiness;
-    private final ObjectMapper objectMapper;
+    private final CronProcessBusiness cronProcessBusiness;
+    private final CronLogBusiness cronLogBusiness;
 
     /**
      * Notice 생성 Post 및 웹훅 기능
@@ -32,7 +37,16 @@ public class WebhookService {
         // Cron Monitoring 서버에 Notice Post
         String noticeResponse = noticeBusiness.postNotice(parsedLogDTO);
 
+        // 해당하는 notice를 생성하지 못한 경우
         if (noticeResponse.equals("404")) {
+            return;
+        }
+
+        // Cron Monitoring 서버에 CronProcess 생성 Post
+        String cronProcessResponse = cronProcessBusiness.postCronProcess(parsedLogDTO);
+
+        // 해당하는 CronProcess를 생성하지 못한 경우
+        if (cronProcessResponse.equals("404")) {
             return;
         }
 
@@ -40,7 +54,7 @@ public class WebhookService {
         webhookBusiness.produceWebhook(parsedLogDTO);
 
         // Influx DB 에 로그 저장
-        noticeBusiness.saveLog(parsedLogDTO);
+        cronLogBusiness.saveLog(parsedLogDTO);
     }
 
     /**
@@ -52,7 +66,18 @@ public class WebhookService {
     @KafkaListener(topics = "slack", groupId = "slack_consumer", containerFactory = "webhookListener")
     public void slackConsumer(WebhookDTO.Request request) throws IOException {
 
-        webhookBusiness.sendMessage(request.getUrl(), request.getText());
+        SlackDTO slackDTO = new SlackDTO();
+        slackDTO.setText(request.getText());
+
+        Attachment attachment = Attachment.builder()
+            .title("Cron Status Webhook")
+            .text(request.getText())
+            .authorName("Cron Monitoring Server")
+            .build();
+
+        slackDTO.addAttachment(attachment);
+
+        webhookBusiness.sendMessage(request, slackDTO);
     }
 
     /**
@@ -64,7 +89,10 @@ public class WebhookService {
     @KafkaListener(topics = "hiworks", groupId = "hiworks_consumer", containerFactory = "webhookListener")
     public void hiworksConsumer(WebhookDTO.Request request) throws IOException {
 
-        webhookBusiness.sendMessage(request.getUrl(), request.getText());
+        HiworksDTO hiworksDTO = new HiworksDTO();
+        hiworksDTO.setText(request.getText());
+
+        webhookBusiness.sendMessage(request, hiworksDTO);
     }
 
 }

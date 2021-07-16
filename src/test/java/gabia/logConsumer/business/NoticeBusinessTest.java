@@ -1,36 +1,31 @@
 package gabia.logConsumer.business;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.AdditionalAnswers.returnsFirstArg;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import gabia.logConsumer.dto.NoticeDTO;
-import gabia.logConsumer.dto.NoticeDTO.Request;
 import gabia.logConsumer.dto.ParsedLogDTO;
-import gabia.logConsumer.entity.CronLog;
 import gabia.logConsumer.entity.Enum.NoticeType;
-import gabia.logConsumer.repository.CronLogRepository;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
 @AutoConfigureMockMvc
 class NoticeBusinessTest {
-
-    @Mock
-    private CronLogRepository cronLogRepository;
 
     @Mock
     private RestTemplate restTemplate;
@@ -44,27 +39,36 @@ class NoticeBusinessTest {
 
         // given
         openMocks(this);
-        NoticeDTO.Request request = new Request();
-        request.setNoticeMessage("test");
-        request.setNoticeType(NoticeType.Start);
-        request.setCronJobId(UUID.randomUUID());
-        request.setNoticeCreateDateTime(Timestamp.from(Instant.now()));
 
-        given(restTemplate.postForObject(any(String.class), any(), any()))
-            .willReturn("test");
+        UUID uuid = UUID.randomUUID();
+        Timestamp timestamp = Timestamp.from(Instant.now());
+
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("noticeMessage", "test");
+        request.put("noticeType", "Start");
+        request.put("cronJobId", uuid.toString());
+        request.put("noticeCreateDateTime", timestamp.toString());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
+
+
+        Mockito.when(
+            restTemplate.exchange("http://10.7.27.11:80/notifications/notice", HttpMethod.POST,
+                entity, String.class))
+            .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
         ParsedLogDTO parsedLogDTO = new ParsedLogDTO();
         parsedLogDTO.setNoticeType(NoticeType.Start);
         parsedLogDTO.setContent("test");
-        parsedLogDTO.setCronJobId(request.getCronJobId());
-        parsedLogDTO.setTimestamp(request.getNoticeCreateDateTime());
+        parsedLogDTO.setCronJobId(uuid);
+        parsedLogDTO.setTimestamp(timestamp);
         parsedLogDTO.setPid("1");
 
         String notice = noticeBusiness.postNotice(parsedLogDTO);
 
         // then
-        assertThat(notice).isEqualTo("test");
+        assertThat(notice).isEqualTo("200");
 
     }
 
@@ -73,55 +77,37 @@ class NoticeBusinessTest {
 
         // given
         openMocks(this);
-        NoticeDTO.Request request = new Request();
-        request.setNoticeMessage("test");
-        request.setNoticeType(NoticeType.Start);
-        request.setCronJobId(UUID.randomUUID());
-        request.setNoticeCreateDateTime(Timestamp.from(Instant.now()));
+        UUID uuid = UUID.randomUUID();
+        Timestamp timestamp = Timestamp.from(Instant.now());
 
-        given(restTemplate.postForObject(any(String.class), any(), any()))
-            .willThrow(HttpClientErrorException.class);
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("noticeMessage", "test");
+        request.put("noticeType", "Start");
+        request.put("cronJobId", uuid.toString());
+        request.put("noticeCreateDateTime", timestamp.toString());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
+
+
+        Mockito.when(
+            restTemplate.exchange("http://10.7.27.11:80/notifications/notice", HttpMethod.POST,
+                entity, String.class))
+            .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         // when
         ParsedLogDTO parsedLogDTO = new ParsedLogDTO();
         parsedLogDTO.setNoticeType(NoticeType.Start);
         parsedLogDTO.setContent("test");
-        parsedLogDTO.setCronJobId(request.getCronJobId());
-        parsedLogDTO.setTimestamp(request.getNoticeCreateDateTime());
+        parsedLogDTO.setCronJobId(uuid);
+        parsedLogDTO.setTimestamp(timestamp);
         parsedLogDTO.setPid("1");
 
         String notice = noticeBusiness.postNotice(parsedLogDTO);
 
         // then
-        assertThat(notice).isEqualTo("0");
+        assertThat(notice).isEqualTo("404");
 
     }
 
-    @Test
-    void saveLog() {
 
-        // given
-        openMocks(this);
-        CronLog cronLog = CronLog.builder()
-            .logTime(Instant.now())
-            .log("test")
-            .cronProcess("1")
-            .build();
-
-        ParsedLogDTO parsedLogDTO = new ParsedLogDTO();
-        parsedLogDTO.setPid("1");
-        parsedLogDTO.setContent("test");
-        parsedLogDTO.setNoticeType(NoticeType.Start);
-        parsedLogDTO.setTimestamp(Timestamp.from(cronLog.getLogTime()));
-        parsedLogDTO.setCronJobId(UUID.randomUUID());
-
-        given(cronLogRepository.save(any())).willAnswer(returnsFirstArg());
-
-        // when
-
-        ParsedLogDTO parsedLogDTOResult = noticeBusiness.saveLog(parsedLogDTO);
-
-        // then
-        assertThat(parsedLogDTOResult.getContent()).isEqualTo("test");
-    }
 }

@@ -44,7 +44,7 @@ public class ParsedLogDTO {
         String[] excludeContent = parsedMessage[2].split(" ");
 
         // pid, Message Type 추출 (추가적인 파라미터)
-        parsedLogDTO.setPid(excludeContent[1]);
+        parsedLogDTO.setPid(excludeContent[0]);
         parsedLogDTO.setNoticeType(NoticeType.valueOf(excludeContent[1]));
         //Content 추출
         parsedLogDTO.setContent(parsedMessage[3]);

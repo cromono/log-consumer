@@ -3,9 +3,12 @@ package gabia.logConsumer.business;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import gabia.logConsumer.dto.ParsedLogDTO;
+import gabia.logConsumer.dto.SlackDTO;
 import gabia.logConsumer.dto.WebhookDTO;
 import gabia.logConsumer.dto.WebhookDTO.Request;
+import gabia.logConsumer.dto.WebhookMessage;
 import gabia.logConsumer.entity.Enum.NoticeType;
 import gabia.logConsumer.entity.Enum.WebhookEndpoint;
 import gabia.logConsumer.entity.NoticeSubscription;
@@ -14,16 +17,24 @@ import gabia.logConsumer.repository.NoticeSubscriptionRepository;
 import gabia.logConsumer.repository.WebhookSubscriptionRepository;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.actuate.autoconfigure.metrics.MetricsProperties.Web;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.client.RestTemplate;
 
@@ -123,5 +134,37 @@ class WebhookBusinessTest {
         Assertions.assertEquals(response.get(0).getUrl(), "http://127.0.0.1:8080/slack");
         Assertions.assertEquals(response.get(1).getUrl(), "http://127.0.0.1:8080/hiworks");
         Assertions.assertEquals(response.get(0).getText(), text);
+    }
+
+    @Test
+    void sendMessage() throws JsonProcessingException {
+
+        //given
+        openMocks(this);
+        UUID uuid = UUID.randomUUID();
+        Timestamp timestamp = Timestamp.from(Instant.now());
+
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("text", "test");
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
+        Mockito.when(
+            restTemplate.exchange("http://localhost:8081/notifications/notice", HttpMethod.POST,
+                entity, String.class))
+            .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        WebhookDTO.Request webhookDTO = new WebhookDTO.Request();
+        webhookDTO.setText("test");
+        webhookDTO.setUrl("http://localhost:8081/notifications/notice");
+
+        SlackDTO slackDTO = new SlackDTO();
+        slackDTO.setText("test");
+
+        //when
+        boolean result = webhookBusiness.sendMessage(webhookDTO, slackDTO);
+
+        //then
+        Assertions.assertEquals(result, true);
+
     }
 }
