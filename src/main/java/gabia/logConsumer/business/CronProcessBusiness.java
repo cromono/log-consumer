@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,9 +28,9 @@ public class CronProcessBusiness {
         CronJob cronJob = cronJobRepository.findById(parsedLogDTO.getCronJobId())
             .orElseThrow(() -> new CronJobNotFoundException("해당 크론 잡이 존재하지 않습니다."));
 
-        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/procss/%s",
+        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
             cronJob.getServer(), cronJob.getId().toString(), parsedLogDTO.getPid());
-//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/procss/%s",
+//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/process/",
 //            cronJob.getServer(), cronJob.getId().toString(), parsedLogDTO.getPid());
 
         // request 생성
@@ -43,7 +44,7 @@ public class CronProcessBusiness {
         if (parsedLogDTO.getNoticeType() == NoticeType.Start) {
 
             // 시작하는 Log 인 경우
-            cronProcessRequest.put("startTime", parsedLogDTO.getTimestamp());
+            cronProcessRequest.put("startTime", parsedLogDTO.getTimestamp().toString());
             ResponseEntity<String> response = restTemplate
                 .exchange(url, HttpMethod.POST, entity, String.class);
             String result = String.valueOf(response.getStatusCodeValue());
@@ -51,7 +52,9 @@ public class CronProcessBusiness {
         } else if (parsedLogDTO.getNoticeType() == NoticeType.End) {
 
             // 끝나는는 Log 인 경우
-            cronProcessRequest.put("endTime", parsedLogDTO.getTimestamp());
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            url = url + parsedLogDTO.getPid();
+            cronProcessRequest.put("endTime", parsedLogDTO.getTimestamp().toString());
             ResponseEntity<String> response = restTemplate
                 .exchange(url, HttpMethod.PATCH, entity, String.class);
             String result = String.valueOf(response.getStatusCodeValue());
