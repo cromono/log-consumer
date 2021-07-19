@@ -28,6 +28,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -63,13 +64,13 @@ class CronProcessBusinessTest {
 
         Map<String, Object> request = new HashMap<String, Object>();
         request.put("pid", "1");
-        request.put("startTime", timestamp);
+        request.put("startTime", timestamp.toString());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
 
-//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/procss/%s",
+//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/process/%s",
 //            cronJob.getServer(), cronJob.getId().toString(), "1");
-        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/procss/%s",
+        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
             cronJob.getServer(), cronJob.getId().toString(), "1");
 
         Mockito.when(
@@ -111,18 +112,18 @@ class CronProcessBusinessTest {
 
         Map<String, Object> request = new HashMap<String, Object>();
         request.put("pid", "1");
-        request.put("endTime", timestamp);
+        request.put("endTime", timestamp.toString());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
 
-//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/procss/%s",
+//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/process/%s",
 //            cronJob.getServer(), cronJob.getId().toString(), "1");
-        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/procss/%s",
-            cronJob.getServer(), cronJob.getId().toString(), "1");
+        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
+            cronJob.getServer(), cronJob.getId().toString());
 
         Mockito.when(
             restTemplate.exchange(
-                url, HttpMethod.PATCH, entity, String.class))
+                url+"1", HttpMethod.PATCH, entity, String.class))
             .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
@@ -159,14 +160,14 @@ class CronProcessBusinessTest {
 
         Map<String, Object> request = new HashMap<String, Object>();
         request.put("pid", "1");
-        request.put("startTime", timestamp);
+        request.put("startTime", timestamp.toString());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
 
-//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/procss/%s",
+//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/process/%s",
 //            cronJob.getServer(), cronJob.getId().toString(), "1");
-        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/procss/%s",
-            cronJob.getServer(), cronJob.getId().toString(), "1");
+        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
+            cronJob.getServer(), cronJob.getId().toString());
 
         Mockito.when(
             restTemplate.exchange(
@@ -207,14 +208,14 @@ class CronProcessBusinessTest {
 
         Map<String, Object> request = new HashMap<String, Object>();
         request.put("pid", "1");
-        request.put("startTime", timestamp);
+        request.put("startTime", timestamp.toString());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
 
-//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/procss/%s",
+//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/process/%s",
 //            cronJob.getServer(), cronJob.getId().toString(), "1");
-        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/procss/%s",
-            cronJob.getServer(), cronJob.getId().toString(), "1");
+        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
+            cronJob.getServer(), cronJob.getId().toString());
 
         Mockito.when(
             restTemplate.exchange(
@@ -255,18 +256,20 @@ class CronProcessBusinessTest {
 
         Map<String, Object> request = new HashMap<String, Object>();
         request.put("pid", "1");
-        request.put("endTime", timestamp);
+        request.put("endTime", timestamp.toString());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(request);
 
 //        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/procss/%s",
 //            cronJob.getServer(), cronJob.getId().toString(), "1");
-        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/procss/%s",
-            cronJob.getServer(), cronJob.getId().toString(), "1");
+        String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
+            cronJob.getServer(), cronJob.getId().toString());
+
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         Mockito.when(
             restTemplate.exchange(
-                url, HttpMethod.PATCH, entity, String.class))
+                url+"1", HttpMethod.PATCH, entity, String.class))
             .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         // when
