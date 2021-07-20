@@ -30,7 +30,7 @@ public class CronProcessBusiness {
 
         String url = String.format("http://10.7.27.11:80/cron-servers/%s/cron-jobs/%s/process/",
             cronJob.getServer(), cronJob.getId().toString(), parsedLogDTO.getPid());
-//        String url = String.format("http://localhost:8081/cron-servers/%s/cron-jobs/%s/process/",
+//        String url = String.format("http://139.150.64.58:80/cron-servers/%s/cron-jobs/%s/process/",
 //            cronJob.getServer(), cronJob.getId().toString(), parsedLogDTO.getPid());
 
         // request 생성

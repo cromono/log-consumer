@@ -25,7 +25,7 @@ public class NoticeBusiness {
     private final RestTemplate restTemplate;
 
         private final String url = "http://10.7.27.11:80/notifications/notice";
-//    private final String url = "http://localhost:8081/notifications/notice";
+//    private final String url = "http://139.150.64.58:80/notifications/notice";
 
     /**
      * Notice 생성
