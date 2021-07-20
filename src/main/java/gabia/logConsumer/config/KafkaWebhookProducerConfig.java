@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -15,7 +16,9 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @Configuration
 public class KafkaWebhookProducerConfig {
 
-    private String bootstrapServer = "http://10.7.27.9:9092";
+    @Value("${spring.kafka.bootstrap-servers}")
+    public String bootstrapServer;
+//    private String bootstrapServer = "http://10.7.27.9:9092";
 //    private String bootstrapServer = "http://127.0.0.1:9092";
 
     @Bean

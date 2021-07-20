@@ -1,5 +1,7 @@
 package gabia.logConsumer.service;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import gabia.logConsumer.business.CronLogBusiness;
 import gabia.logConsumer.business.CronProcessBusiness;
 import gabia.logConsumer.business.NoticeBusiness;
@@ -32,7 +34,9 @@ public class WebhookService {
     public void processLog(String message) {
 
         // 토픽에서 가져온 카프카 메시지 파싱
-        ParsedLogDTO parsedLogDTO = new ParsedLogDTO().fromMessage(message);
+        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+        String logMessage = jsonObject.get("message").getAsString();
+        ParsedLogDTO parsedLogDTO = new ParsedLogDTO().fromMessage(logMessage);
 
         // Cron Monitoring 서버에 Notice Post
         String noticeResponse = noticeBusiness.postNotice(parsedLogDTO);
